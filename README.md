@@ -7,6 +7,5 @@
   
   - Git commands skills
   - Simple program to keep me busy
-  - Get more experience with controls styling
-  - See how advanced I can make it in the future
-
+  - Get more experience with styling of controls
+  - To see how advanced I can make it in the future
