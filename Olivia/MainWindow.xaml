@@ -4,6 +4,8 @@
         d:DataContext="{d:DesignInstance local:MainWindowViewModel}"
         mc:Ignorable="d">
 
+  <Window.Icon>resources/Ampeross-Qetto-2-Copy.ico</Window.Icon>
+
   <Window.Resources>
     <ResourceDictionary>
       <Style TargetType="{x:Type Button}">
@@ -35,7 +37,7 @@
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <StackPanel Grid.Row="0">
+    <StackPanel Grid.Row="0" Margin="2,0,4,0">
       <Label Content="Input Folder" />
       <Grid>
         <Grid.ColumnDefinitions>
@@ -43,12 +45,12 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <TextBox Grid.Column="0" MinWidth="125" Text="{Binding InputFolderPath}" />
-        <Button Grid.Column="1" MinWidth="20" Margin="4,0,4,0"
+        <Button Grid.Column="1" MinWidth="20" Margin="4,0,0,0"
                 Content="..." />
       </Grid>
     </StackPanel>
 
-    <StackPanel Grid.Row="1">
+    <StackPanel Grid.Row="1" Margin="2,0,4,0">
       <Label Content="Output Folder" />
       <Grid>
         <Grid.ColumnDefinitions>
@@ -56,7 +58,7 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <TextBox Grid.Column="0" MinWidth="125" Text="{Binding OutputFolderPath}" />
-        <Button Grid.Column="1" MinWidth="20" Margin="4,0,4,0"
+        <Button Grid.Column="1" MinWidth="20" Margin="4,0,0,0"
                 Content="..." />
       </Grid>
     </StackPanel>
