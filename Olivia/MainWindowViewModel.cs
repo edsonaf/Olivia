@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows.Forms;
 using System.Windows.Input;
@@ -13,9 +14,10 @@ namespace Olivia
       InputFolderPath = Settings.Default.LastUsedInputFolderPath;
       OutputFolderPath = Settings.Default.LastUsedOutputFolderPath;
       ShowMessage = Settings.Default.ShowMessage;
+      IncludeSubFolders = Settings.Default.IncludeSubfolders;
     }
 
-    
+
     #region Properties
 
     private string _inputFolderPath;
@@ -46,7 +48,13 @@ namespace Olivia
       get => _includeSubFolders;
       set
       {
+        if (_includeSubFolders == value) return;
+
         _includeSubFolders = value;
+
+        Settings.Default.IncludeSubfolders = value;
+        Settings.Default.Save();
+
         RaisePropertyChanged(nameof(IncludeSubFolders));
       }
     }
@@ -74,25 +82,22 @@ namespace Olivia
 
 
     private RelayCommand _processCommand;
-    public ICommand ProcessCommand
+    public ICommand ProcessCommand => _processCommand ?? (_processCommand = new RelayCommand(param =>
     {
-      get
-      {
-        return _processCommand ?? (_processCommand = new RelayCommand(param =>
-        {
-          // Save last used folder paths
-          Settings.Default.LastUsedInputFolderPath = InputFolderPath;
-          Settings.Default.LastUsedOutputFolderPath = OutputFolderPath;
+      // Save last used folder paths
+      Settings.Default.LastUsedInputFolderPath = InputFolderPath;
+      Settings.Default.LastUsedOutputFolderPath = OutputFolderPath;
 
-          CopyToOutputFolder();
+      CopyToOutputFolder();
+          
+      Settings.Default.Save();
+    }));
 
+    private RelayCommand _stopCommand;
+    public ICommand StopCommand => _stopCommand ?? (_stopCommand = new RelayCommand(param =>
+    {
 
-          Settings.Default.Save();
-
-
-        }));
-      }
-    }
+    }));
 
     #endregion Commands
 
@@ -115,24 +120,42 @@ namespace Olivia
 
     private void CopyToOutputFolder()
     {
-      // TODO: If output folder does not exist. create it.
-      // TODO: search for files in subfolders
-
-      if (IncludeSubFolders)
+      if (!Directory.Exists(OutputFolderPath))
       {
-        
+        Directory.CreateDirectory(OutputFolderPath);
       }
 
-      var files = Directory.GetFiles(InputFolderPath, "*.txt");
+      var files = IncludeSubFolders ? Directory.GetFiles(InputFolderPath, "*.txt", System.IO.SearchOption.AllDirectories) : Directory.GetFiles(InputFolderPath, "*.txt");
       foreach (var file in files)
       {
-       File.Copy(file, OutputFolderPath + file.Substring(InputFolderPath.Length), true); 
+        string onlyFileName;
+        var startOfFileName = file.LastIndexOf("\\", StringComparison.Ordinal);
+        if (startOfFileName > 0) onlyFileName = file.Substring(startOfFileName);
+        else
+        {
+          startOfFileName = file.LastIndexOf("/", StringComparison.Ordinal);
+          onlyFileName = file.Substring(startOfFileName > 0 ? startOfFileName : InputFolderPath.Length);
+        }
+
+        File.Copy(file, OutputFolderPath + onlyFileName, true);
       }
 
       var dialogResult = MessageBox.Show(@"Finished. Open folder?", @"Finished copying", MessageBoxButtons.YesNo);
+
+      if (dialogResult != DialogResult.Yes) return;
+      
+      // Open folder
+      try
+      {
+        System.Diagnostics.Process.Start(OutputFolderPath);
+      }
+      catch (Exception e)
+      {
+        Console.WriteLine($@"Failed to open directory. Exception {e}");
+      }
     }
 
-#endregion Private Functions
+    #endregion Private Functions
 
 
     public event PropertyChangedEventHandler PropertyChanged;
@@ -141,5 +164,13 @@ namespace Olivia
     {
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+  }
+
+  public enum FileType
+  {
+    Text,
+    Image,
+    Document,
+    Music
   }
 }

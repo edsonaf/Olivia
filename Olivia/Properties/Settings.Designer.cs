@@ -58,5 +58,17 @@ namespace Olivia.Properties {
                 this["ShowMessage"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IncludeSubfolders {
+            get {
+                return ((bool)(this["IncludeSubfolders"]));
+            }
+            set {
+                this["IncludeSubfolders"] = value;
+            }
+        }
     }
 }
