@@ -1,9 +1,12 @@
-﻿using System.Windows.Input;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Windows.Forms;
+using System.Windows.Input;
 using Olivia.Properties;
 
 namespace Olivia
 {
-  public class MainWindowViewModel
+  public class MainWindowViewModel : INotifyPropertyChanged
   {
     public MainWindowViewModel()
     {
@@ -12,23 +15,63 @@ namespace Olivia
       ShowMessage = Settings.Default.ShowMessage;
     }
 
-    public string InputFolderPath { get; set; }
+    
+    #region Properties
 
-    public string OutputFolderPath { get; set; }
+    private string _inputFolderPath;
+    public string InputFolderPath
+    {
+      get => _inputFolderPath;
+      set
+      {
+        _inputFolderPath = value;
+        RaisePropertyChanged(nameof(InputFolderPath));
+      }
+    }
+
+    private string _outputFolderPath;
+    public string OutputFolderPath
+    {
+      get => _outputFolderPath;
+      set
+      {
+        _outputFolderPath = value;
+        RaisePropertyChanged(nameof(OutputFolderPath));
+      }
+    }
+
+    private bool _includeSubFolders;
+    public bool IncludeSubFolders
+    {
+      get => _includeSubFolders;
+      set
+      {
+        _includeSubFolders = value;
+        RaisePropertyChanged(nameof(IncludeSubFolders));
+      }
+    }
 
     public bool ShowMessage { get; set; }
 
-    private RelayCommand _browseFolderCommand;
-    public ICommand BrowseFolderCommand
-    {
-      get
-      {
-        return _browseFolderCommand ?? (_browseFolderCommand = new RelayCommand(param =>
-        {
+    #endregion Properties
 
-        }));
+
+    #region Commands
+
+    private RelayCommand _browseFolderCommand;
+
+    public ICommand BrowseFolderCommand => _browseFolderCommand ?? (_browseFolderCommand = new RelayCommand(param =>
+    {
+      var isInput = false;
+
+      if (param != null)
+      {
+        isInput = (string)param == "true";
       }
-    }
+
+      OpenFolder(isInput);
+    }));
+
 
     private RelayCommand _processCommand;
     public ICommand ProcessCommand
@@ -41,6 +84,7 @@ namespace Olivia
           Settings.Default.LastUsedInputFolderPath = InputFolderPath;
           Settings.Default.LastUsedOutputFolderPath = OutputFolderPath;
 
+          CopyToOutputFolder();
 
 
           Settings.Default.Save();
@@ -48,6 +92,54 @@ namespace Olivia
 
         }));
       }
+    }
+
+    #endregion Commands
+
+
+    #region Private Functions
+
+    private void OpenFolder(bool isInput)
+    {
+      using (var dialog = new FolderBrowserDialog())
+      {
+        var result = dialog.ShowDialog();
+
+        if (result == DialogResult.OK)
+        {
+          if (isInput) InputFolderPath = dialog.SelectedPath;
+          else OutputFolderPath = dialog.SelectedPath;
+        }
+      }
+    }
+
+    private void CopyToOutputFolder()
+    {
+      // TODO: If output folder does not exist. create it.
+      // TODO: search for files in subfolders
+
+      if (IncludeSubFolders)
+      {
+        
+      }
+
+      var files = Directory.GetFiles(InputFolderPath, "*.txt");
+      foreach (var file in files)
+      {
+       File.Copy(file, OutputFolderPath + file.Substring(InputFolderPath.Length), true); 
+      }
+
+      var dialogResult = MessageBox.Show(@"Finished. Open folder?", @"Finished copying", MessageBoxButtons.YesNo);
+    }
+
+#endregion Private Functions
+
+
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    private void RaisePropertyChanged(string propertyName = null)
+    {
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
   }
 }

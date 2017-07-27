@@ -44,9 +44,10 @@
           <ColumnDefinition />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <TextBox Grid.Column="0" MinWidth="125" Text="{Binding InputFolderPath}" />
+        <TextBox Grid.Column="0" MinWidth="125" Text="{Binding InputFolderPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
         <Button Grid.Column="1" MinWidth="20" Margin="4,0,0,0"
-                Content="..." />
+                Command="{Binding BrowseFolderCommand}"
+                CommandParameter="true" Content="..." />
       </Grid>
     </StackPanel>
 
@@ -59,15 +60,25 @@
         </Grid.ColumnDefinitions>
         <TextBox Grid.Column="0" MinWidth="125" Text="{Binding OutputFolderPath}" />
         <Button Grid.Column="1" MinWidth="20" Margin="4,0,0,0"
-                Content="..." />
+                Command="{Binding BrowseFolderCommand}"
+                CommandParameter="false" Content="..." />
       </Grid>
     </StackPanel>
-    <StackPanel Grid.Row="2" Margin="0,8,8,0" HorizontalAlignment="Right"
-                Orientation="Horizontal">
-      <Button MinWidth="75" Margin="0,0,8,0"
-              Command="{Binding ProcessCommand}"
-              Content="Process" />
-      <Button MinWidth="50" Command="{Binding StopCommand}" Content="Stop" />
-    </StackPanel>
+    <Grid Grid.Row="2" Margin="2,8,4,0">
+
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition />
+        <ColumnDefinition />
+      </Grid.ColumnDefinitions>
+      <CheckBox Grid.Column="0" Content="Include subfolders" IsChecked="{Binding IncludeSubFolders}" />
+
+      <StackPanel Grid.Column="1" Margin="4,0,0,0" Orientation="Horizontal">
+        <Button MinWidth="75" Margin="0,0,8,0"
+                Command="{Binding ProcessCommand}"
+                CommandParameter="false" Content="Process" />
+        <Button MinWidth="50" Command="{Binding StopCommand}" Content="Stop" />
+      </StackPanel>
+
+    </Grid>
   </Grid>
 </Window>
