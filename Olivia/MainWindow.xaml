@@ -31,6 +31,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
     <Grid.ColumnDefinitions>
@@ -76,9 +77,20 @@
         <Button MinWidth="75" Margin="0,0,8,0"
                 Command="{Binding ProcessCommand}"
                 CommandParameter="false" Content="Process" />
-        <Button MinWidth="50" Command="{Binding StopCommand}" Content="Stop" />
+        <Button MinWidth="50"
+                Command="{Binding StopCommand}"
+                Content="Stop" IsEnabled="False" />
       </StackPanel>
-
     </Grid>
+
+    <DataGrid Grid.Row="3" Margin="0,8,0,0" AutoGenerateColumns="False"
+              IsReadOnly="True"
+              ItemsSource="{Binding CopiedFiles, UpdateSourceTrigger=PropertyChanged}">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="*" Binding="{Binding Name}" Header="Name" />
+        <DataGridTextColumn MinWidth="75" Binding="{Binding Size}" Header="Size (KB)" />
+      </DataGrid.Columns>
+    </DataGrid>
+
   </Grid>
 </Window>

@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Input;
+using Microsoft.WindowsAPICodePack.Dialogs;
 using Olivia.Properties;
 
 namespace Olivia
@@ -61,6 +65,9 @@ namespace Olivia
 
     public bool ShowMessage { get; set; }
 
+    private readonly ObservableCollection<CopyFile> _copiedFiles = new ObservableCollection<CopyFile>();
+    public ObservableCollection<CopyFile> CopiedFiles => _copiedFiles;
+
     #endregion Properties
 
 
@@ -82,18 +89,19 @@ namespace Olivia
 
 
     private RelayCommand _processCommand;
-    public ICommand ProcessCommand => _processCommand ?? (_processCommand = new RelayCommand(param =>
+    public ICommand ProcessCommand => _processCommand ?? (_processCommand = new RelayCommand(async param =>
     {
       // Save last used folder paths
       Settings.Default.LastUsedInputFolderPath = InputFolderPath;
       Settings.Default.LastUsedOutputFolderPath = OutputFolderPath;
 
-      CopyToOutputFolder();
-          
+      await CopyToOutputFolder();
+
       Settings.Default.Save();
     }));
 
     private RelayCommand _stopCommand;
+
     public ICommand StopCommand => _stopCommand ?? (_stopCommand = new RelayCommand(param =>
     {
 
@@ -118,14 +126,17 @@ namespace Olivia
       }
     }
 
-    private void CopyToOutputFolder()
+    private async Task CopyToOutputFolder()
     {
       if (!Directory.Exists(OutputFolderPath))
       {
         Directory.CreateDirectory(OutputFolderPath);
       }
 
-      var files = IncludeSubFolders ? Directory.GetFiles(InputFolderPath, "*.txt", System.IO.SearchOption.AllDirectories) : Directory.GetFiles(InputFolderPath, "*.txt");
+      CopiedFiles.Clear();
+
+      var files = IncludeSubFolders ? Directory.GetFiles(InputFolderPath, "*.txt", SearchOption.AllDirectories) : Directory.GetFiles(InputFolderPath, "*.txt");
+
       foreach (var file in files)
       {
         string onlyFileName;
@@ -137,13 +148,22 @@ namespace Olivia
           onlyFileName = file.Substring(startOfFileName > 0 ? startOfFileName : InputFolderPath.Length);
         }
 
-        File.Copy(file, OutputFolderPath + onlyFileName, true);
+        CopiedFiles.Add(new CopyFile(onlyFileName, (int)(new FileInfo(file).Length / 1024)));
+
+        await Task.Run(async () =>
+        {
+          await Task.Run(() => File.Copy(file, OutputFolderPath + onlyFileName, true));
+          Thread.Sleep(50);
+        });
+          
+
+        RaisePropertyChanged(nameof(CopiedFiles));
       }
 
       var dialogResult = MessageBox.Show(@"Finished. Open folder?", @"Finished copying", MessageBoxButtons.YesNo);
 
       if (dialogResult != DialogResult.Yes) return;
-      
+
       // Open folder
       try
       {
@@ -151,7 +171,7 @@ namespace Olivia
       }
       catch (Exception e)
       {
-        Console.WriteLine($@"Failed to open directory. Exception {e}");
+        MessageBox.Show($@"Failed to open directory. Exception {e}", @"Error", MessageBoxButtons.OK);
       }
     }
 
@@ -164,6 +184,19 @@ namespace Olivia
     {
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
+  }
+
+  public class CopyFile
+  {
+    public CopyFile(string name, int size)
+    {
+      Name = name;
+      Size = size;
+    }
+
+    public string Name { get; set; }
+
+    public int Size { get; set; }
   }
 
   public enum FileType
